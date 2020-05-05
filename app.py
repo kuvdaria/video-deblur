@@ -17,7 +17,7 @@ from flask import Flask, request
 
 import EDVR.codes.utils.util as util
 import EDVR.codes.data.util as data_util
-#import EDVR.codes.models.archs.EDVR_arch as EDVR_arch
+import EDVR.codes.models.archs.EDVR_arch as EDVR_arch
 
 
 
@@ -35,10 +35,10 @@ print('Model Used: ', model_path)
 predeblur, HR_in = True, True
 N_in = 5
 back_RBs = 40
-#model = EDVR_arch.EDVR(128, N_in, 8, 5, back_RBs, predeblur=predeblur, HR_in=HR_in)
-#model.load_state_dict(torch.load(model_path), strict=True)
-#model.eval()
-#model = model.to(device)
+model = EDVR_arch.EDVR(128, N_in, 8, 5, back_RBs, predeblur=predeblur, HR_in=HR_in)
+model.load_state_dict(torch.load(model_path), strict=True)
+model.eval()
+model = model.to(device)
 
 # ---other-specs---
 crop_border = 0
@@ -108,18 +108,16 @@ def predict():
                 frames.append(frame)
 
             if num % num_to_pr == 0 or end:
-                print(num)
                 clean_mem()
                 imgs_LQ = read_img_seq(frames)
                 max_idx = len(frames)
 
                 for img_idx, fr in tqdm(enumerate(frames)):
                     select_idx = data_util.index_generation(img_idx, max_idx, N_in, padding=padding)
-                    #imgs_in = imgs_LQ.index_select(0, torch.LongTensor(select_idx)).unsqueeze(0).to(device)
+                    imgs_in = imgs_LQ.index_select(0, torch.LongTensor(select_idx)).unsqueeze(0).to(device)
 
-                    #output = util.single_forward(model, imgs_in)
-                    #output = util.tensor2img(output.squeeze(0))
-                    output = fr
+                    output = util.single_forward(model, imgs_in)
+                    output = util.tensor2img(output.squeeze(0))
                     writer.writeFrame(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
                     frames = []
 
