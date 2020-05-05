@@ -3,6 +3,5 @@ Flask==1.0.3
 torchvision==0.3.0
 pillow<7
 ffmpeg
-ffmpeg-python
 scikit-video
 
