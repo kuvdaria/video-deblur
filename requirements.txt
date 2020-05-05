@@ -6,3 +6,4 @@ ffmpeg
 scikit-video
 opencv-python
 wget
+tqdm
