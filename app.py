@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import gc
 from tqdm import tqdm
+import wget
 
 
 from flask import Flask, request
@@ -24,7 +25,8 @@ stage = 1
 device = torch.device('cuda')
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 flip_test = False
-model_path = '../experiments/pretrained_models/EDVR_REDS_deblur_L.pth'
+url = 'https://drive.google.com/uc?export=download&id=1ZCl0aU8isEnUCsUYv9rIZZQrGo7vBFUH'
+model_path = wget.download(url)
 print('Model Used: ', model_path)
 predeblur, HR_in = True, True
 N_in = 5
@@ -41,6 +43,7 @@ border_frame = N_in // 2  # border frames when evaluate
 padding = 'replicate'
 save_imgs = True
 num_to_pr = 30
+
 
 def clean_mem():
     # torch.cuda.empty_cache()
@@ -100,7 +103,8 @@ def predict():
                 frame = preProcess(frame, 16)
                 frames.append(frame)
 
-            if num % num_to_pr == 0 or end == True:
+            if num % num_to_pr == 0 or end:
+                print(num)
                 clean_mem()
                 imgs_LQ = read_img_seq(frames)
                 max_idx = len(frames)
@@ -111,9 +115,10 @@ def predict():
 
                     output = util.single_forward(model, imgs_in)
                     output = util.tensor2img(output.squeeze(0))
-                    writer.writeFrame(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
 
+                    writer.writeFrame(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
                     frames = []
+
         writer.close()
         cap.release()
 
@@ -130,8 +135,8 @@ def predict():
             + '"'
         )
 
-        out_path = '/content/video_done.mp4'
-        result_path = '/content/video_done_aud.mp4'
+        out_path = 'video_done_.mp4'
+        result_path = 'video_done_aud.mp4'
 
         if audio_file.exists:
             os.system(
@@ -143,7 +148,6 @@ def predict():
                 + str(result_path)
                 + '"'
             )
-
         return 'ok'
     else:
         return 'Waiting for some action'
