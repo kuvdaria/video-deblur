@@ -4,4 +4,5 @@ torchvision==0.3.0
 pillow<7
 ffmpeg
 scikit-video
-
+opencv-python
+wget
