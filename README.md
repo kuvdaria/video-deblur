@@ -29,7 +29,7 @@ Create an account with ACCAUNT_NAME and a project with PROJECT_NAME, then
   floyd run --gpu --mode serve
   ```
   
- ## Send requestd:
+ ## Send request:
  ```
  curl -o video_deblurred.mp4 -F "file=@video.mp4" https://www.floydlabs.com/serve/ACCOUNT_NAME/PROJECT_NAME/process
  ```
