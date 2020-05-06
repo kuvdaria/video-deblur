@@ -31,7 +31,17 @@ Create an account with ACCAUNT_NAME and a project with PROJECT_NAME, then
   
  ## Send request:
  ```
- curl -o video_deblurred.mp4 -F "file=@video.mp4" https://www.floydlabs.com/serve/ACCOUNT_NAME/PROJECT_NAME/process
+ curl -o video_deblurred.mp4 -F "file=@video.mp4" https://www.floydlabs.com/serve/ACCOUNT_NAME/projects/PROJECT_NAME/process
+ ```
+ 
+ # Send request to my running application:
+ ```
+ curl -o video_deblurred.mp4 -F "file=@video.mp4" https://www.floydlabs.com/serve/kuvdaria/projects/video_deblur/process
+ ```
+ 
+ if upstream times out, you can get deblurred file by running
+ ```
+ wget https://www.floydhub.com/viewer/data/td95FTFusgsSmAtfKZ4vxJ/videos/video_done_aud.mp4
  ```
 
 
