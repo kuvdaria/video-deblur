@@ -1,6 +1,8 @@
 import os
 
-os.system("python EDVR/codes/models/archs/dcn/setup.py develop")
+os.system('cd EDVR/codes/models/archs/dcn/')
+os.system('python setup.py develop')
+os.system('cd ../../../../../')
 
 import cv2
 import skvideo.io
