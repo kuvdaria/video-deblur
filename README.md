@@ -1,20 +1,37 @@
 # Video deblur with https://github.com/xinntao/EDVR deblur model.
 
-## Install dependencies:
-```
-pip install -r requirements.txt
-```
+# To run locally:
 
-## Compile deformable convilution:
-```
-cd EDVR/codes/models/archs/dcn
-python setup.py develop
-```
+  ## Install dependencies:
+  ```
+  pip install -r requirements.txt
+  ```
 
-## Run local flask server:
-```
-FLASK_ENV=development FLASK_APP=app.py flask run
-```
+  ## Run local application:
+  ```
+  FLASK_ENV=development FLASK_APP=app.py flask run
+  ```
 
-## Send request containing video path:
-curl -X POST -F file=@video.mp4 http://localhost:5000/process
+  ## Send request containing video paths of input and output videos:
+  ```
+  curl -X POST -F file=@video.mp4 http://localhost:5000/process --output video_deblurred.mp4
+  ```
+  
+# To run with Floydhub:
+Create an account with ACCAUNT_NAME and a project with PROJECT_NAME, then
+
+## Deploy with Floydhub
+  ```
+  pip install floyd-cli
+  floyd login
+  git clone https://github.com/kuvdaria/video-deblur
+  floyd inint ACCOUNT_NAME/PROJECT_NAME
+  floyd run --gpu --mode serve
+  ```
+  
+ ## Send requestd:
+ ```
+ curl -o video_deblurred.mp4 -F "file=@video.mp4" https://www.floydlabs.com/serve/ACCOUNT_NAME/PROJECT_NAME/process
+ ```
+
+
