@@ -1,25 +1,25 @@
+import gc
 import os
-
-os.system('cd EDVR/codes/models/archs/dcn/')
-os.system('python setup.py develop')
-os.system('cd ../../../../../')
+from pathlib import Path
 
 import cv2
+import numpy as np
 import skvideo.io
 import torch
-import os
-from skvideo.io import FFmpegWriter
-from pathlib import Path
-import numpy as np
-import gc
-from tqdm import tqdm
 import wget
+from flask import Flask, request, send_file
+from skvideo.io import FFmpegWriter
+from tqdm import tqdm
 
-from flask import Flask, request
 
-import EDVR.codes.utils.util as util
+os.system('bash setup.sh')
+
+
 import EDVR.codes.data.util as data_util
 import EDVR.codes.models.archs.EDVR_arch as EDVR_arch
+import EDVR.codes.utils.util as util
+
+
 
 
 
@@ -32,7 +32,9 @@ device = torch.device('cuda')
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 flip_test = False
 url = 'https://drive.google.com/uc?export=download&id=1ZCl0aU8isEnUCsUYv9rIZZQrGo7vBFUH'
-model_path = wget.download(url)
+model_path = 'EDVR_REDS_deblur_L.pth'
+if not os.path.exists(model_path):
+    model_path = wget.download(url)
 print('Model Used: ', model_path)
 predeblur, HR_in = True, True
 N_in = 5
@@ -44,15 +46,17 @@ model = model.to(device)
 
 # ---other-specs---
 crop_border = 0
-border_frame = N_in // 2  # border frames when evaluate
+# border frames when evaluate
+border_frame = N_in // 2
 # temporal padding mode
 padding = 'replicate'
 save_imgs = True
 num_to_pr = 30
+if not os.path.exists('videos'):
+    os.mkdir('videos')
 
 
 def clean_mem():
-    # torch.cuda.empty_cache()
     gc.collect()
 
 
@@ -81,14 +85,14 @@ def read_img_seq(img_l):
     return imgs
 
 
-@app.route('/predict', methods=['POST'])
-def predict():
+@app.route('/process', methods=['POST'])
+def process():
     if request.method == 'POST':
         file = request.files['file']
-        video_path = 'new_video.mp4'
+        video_path = 'videos/new_video.mp4'
         file.save(video_path)
         fps = skvideo.io.ffprobe(video_path)['video']['@avg_frame_rate']
-        writer = FFmpegWriter('video_done.mp4',
+        writer = FFmpegWriter('videos/video_done.mp4',
                               outputdict={"-vcodec": "libx264",
                                           "-crf": '17',
                                           "-pix_fmt": "yuv420p",
@@ -109,24 +113,26 @@ def predict():
                 frame = preProcess(frame, 16)
                 frames.append(frame)
 
-            if num % num_to_pr == 0 or end:
+            if (num % num_to_pr == 0 or end) and frames != []:
                 clean_mem()
                 imgs_LQ = read_img_seq(frames)
                 max_idx = len(frames)
 
                 for img_idx, fr in tqdm(enumerate(frames)):
                     select_idx = data_util.index_generation(img_idx, max_idx, N_in, padding=padding)
-                    imgs_in = imgs_LQ.index_select(0, torch.LongTensor(select_idx)).unsqueeze(0).to(device)
+                    imgs_in = imgs_LQ.index_select(0, torch.LongTensor(select_idx)).unsqueeze(0).\
+                        to(device)
 
                     output = util.single_forward(model, imgs_in)
                     output = util.tensor2img(output.squeeze(0))
                     writer.writeFrame(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
-                    frames = []
+                frames = []
 
         writer.close()
         cap.release()
+        print('deblur done')
 
-        video = 'new_video.mp4'
+        video = 'videos/new_video.mp4'
         audio_file = Path(str(video).replace('.mp4', '.aac'))
         if audio_file.exists():
             audio_file.unlink()
@@ -139,22 +145,19 @@ def predict():
             + '"'
         )
 
-        out_path = 'video_done.mp4'
-        result_path = 'video_done_aud.mp4'
-
+        out_path = 'videos/video_done.mp4'
+        result_path = 'videos/video_done_aud.mp4'
         if audio_file.exists:
             os.system(
                 'ffmpeg -y -i "'
                 + str(out_path)
                 + '" -i "'
                 + str(audio_file)
-                + '" -shortest -c:v copy -c:a aac -b:a 256k "'
+                + '" -shortest -c:v copy -c:a aac -b:a 256k -strict -2 "'
                 + str(result_path)
                 + '"'
             )
-        return 'ok'
-    else:
-        return 'Waiting for some action'
+        return send_file('videos/video_done_aud.mp4', attachment_filename='video_done_aud.mp4')
 
 
 if __name__ == '__main__':
