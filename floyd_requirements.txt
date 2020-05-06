@@ -1,0 +1,10 @@
+pip==20.1
+scikit-video
+torch==1.1.0
+Flask==1.0.3
+torchvision==0.3.0
+pillow<7
+ffmpeg
+opencv-python
+wget
+tqdm
