@@ -1,4 +1,4 @@
-pip==20.1
+pip==21.1
 scikit-video
 torch==1.1.0
 Flask==1.0.3
